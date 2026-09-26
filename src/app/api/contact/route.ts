@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-
-const TO_EMAIL = process.env.CONTACT_TO_EMAIL ?? "younasu604@gmail.com";
+import { company } from "@/lib/data";
 
 type ContactBody = {
   name?: string;
@@ -24,7 +23,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
-  // Honeypot — bots fill this; real users never see it
   if (clean(body.website, 200)) {
     return NextResponse.json({ ok: true });
   }
@@ -49,32 +47,29 @@ export async function POST(request: Request) {
   }
 
   try {
-    const response = await fetch(
-      `https://formsubmit.co/ajax/${encodeURIComponent(TO_EMAIL)}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          phone,
-          message,
-          _replyto: email,
-          _subject: `New contact from City Estimating — ${name}`,
-          _template: "table",
-          _captcha: "false",
-        }),
-      }
-    );
+    const formData = new FormData();
+    formData.append("access_key", company.web3formsAccessKey);
+    formData.append("subject", "New Estimate Request from City Estimating");
+    formData.append("from_name", "City Estimating Website");
+    formData.append("name", name);
+    formData.append("email", email);
+    formData.append("phone", phone);
+    formData.append("message", message);
 
-    if (!response.ok) {
-      const detail = await response.text();
-      console.error("FormSubmit error:", response.status, detail);
+    const response = await fetch("https://api.web3forms.com/submit", {
+      method: "POST",
+      body: formData,
+    });
+
+    const result = (await response.json()) as {
+      success?: boolean;
+      message?: string;
+    };
+
+    if (!result.success) {
+      console.error("Web3Forms error:", result);
       return NextResponse.json(
-        { error: "Could not send your message. Please try again." },
+        { error: result.message || "Could not send your message. Please try again." },
         { status: 502 }
       );
     }

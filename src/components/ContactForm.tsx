@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { company } from "@/lib/data";
 
 export function ContactForm() {
   const [sent, setSent] = useState(false);
@@ -13,31 +14,29 @@ export function ContactForm() {
 
     const form = e.currentTarget;
     const data = new FormData(form);
-    const website = String(data.get("website") ?? "");
-    if (website) return;
 
-    const payload = {
-      name: String(data.get("name") ?? ""),
-      email: String(data.get("email") ?? ""),
-      phone: String(data.get("phone") ?? ""),
-      message: String(data.get("message") ?? ""),
-      website,
-    };
+    // Honeypot
+    if (String(data.get("website") ?? "")) return;
+
+    data.delete("website");
+    data.append("access_key", company.web3formsAccessKey);
+    data.append("subject", "New Estimate Request from City Estimating");
+    data.append("from_name", "City Estimating Website");
 
     setLoading(true);
     try {
-      const res = await fetch("/api/contact", {
+      const res = await fetch("https://api.web3forms.com/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: data,
       });
 
-      const json = (await res.json().catch(() => ({}))) as {
-        error?: string;
+      const json = (await res.json()) as {
+        success?: boolean;
+        message?: string;
       };
 
-      if (!res.ok) {
-        setError(json.error || "Something went wrong. Please try again.");
+      if (!json.success) {
+        setError(json.message || "Something went wrong. Please try again.");
         return;
       }
 

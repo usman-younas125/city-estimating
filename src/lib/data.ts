@@ -12,6 +12,8 @@ export const company = {
   },
   emailInfo: "info@cityestimating.com",
   emailQuote: "quote.cityestimating@gmail.com",
+  // Same Web3Forms key as old CT Estimating site (delivers to info@cityestimating.com)
+  web3formsAccessKey: "e31ae107-a551-4e3a-ae75-6b3265451d9c",
   addressLine1: "775 Windemere Oak Way",
   addressLine2: "Lilburn, GA 30047",
   addressFull: "775 Windemere Oak Way, Lilburn, GA 30047",
